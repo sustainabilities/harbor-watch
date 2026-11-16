@@ -20,6 +20,8 @@ pub struct Board {
 struct ModelRow {
     name: String,
     publisher: String,
+    jurisdiction: String,
+    source: String,
     enrolled: String,
     shift_hours: f64,
     last_fit: String,
@@ -48,6 +50,8 @@ impl Board {
             let Ok(v) = json::parse(&text) else { continue };
             let name = v.get("model").and_then(|x| x.as_str()).unwrap_or("?").to_string();
             let publisher = v.get("publisher").and_then(|x| x.as_str()).unwrap_or("unrecorded").to_string();
+            let jurisdiction = v.get("jurisdiction").and_then(|x| x.as_str()).unwrap_or("unrecorded").to_string();
+            let source = v.get("source").and_then(|x| x.as_str()).unwrap_or("https://huggingface.co").to_string();
             let enrolled = v.get("enrolled").and_then(|x| x.as_str()).unwrap_or("?").to_string();
             let shift_hours = v.get("shift_hours").and_then(|x| x.as_f64()).unwrap_or(24.0);
             let sha = v.get("whole_sha512").and_then(|x| x.as_str()).unwrap_or("?").to_string();
@@ -69,7 +73,7 @@ impl Board {
             } else {
                 "FIT"
             };
-            rows.push(ModelRow { name, publisher, enrolled, shift_hours, last_fit, checks, unfit, status, file_sha512: sha });
+            rows.push(ModelRow { name, publisher, jurisdiction, source, enrolled, shift_hours, last_fit, checks, unfit, status, file_sha512: sha });
         }
         rows.sort_by(|a, b| a.name.cmp(&b.name));
         rows
@@ -82,12 +86,14 @@ impl Board {
         if rows.is_empty() {
             body.push_str("<p class=\"empty\">Nothing enrolled yet. The hire comes first: <code>harbor-watch enroll &lt;file&gt; --name &lt;model&gt;</code></p>");
         } else {
-            body.push_str("<table><thead><tr><th>Model</th><th>Publisher</th><th>Enrolled</th><th>Cadence</th><th>Shift checks</th><th>Unfit</th><th>Last fit</th><th>Status</th></tr></thead><tbody>");
+            body.push_str("<table><thead><tr><th>Model</th><th>Publisher</th><th>Origin · jurisdiction</th><th>Enrolled</th><th>Cadence</th><th>Shift checks</th><th>Unfit</th><th>Status</th></tr></thead><tbody>");
             for r in &rows {
                 let pill = format!("<span class=\"pill {}\">{}</span>", r.status.to_lowercase(), r.status);
+                let pill = format!("<span class=\"pill {}\">{}</span>", r.status.to_lowercase(), r.status);
+                let origin = format!("{} · {}", r.source, r.jurisdiction);
                 body.push_str(&format!(
-                    "<tr><td><a href=\"/model/{}\">{}</a></td><td>{}</td><td>{}</td><td>every {}h</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
-                    r.name, r.name, r.publisher, r.enrolled, fmt_hours(r.shift_hours), r.checks, r.unfit, r.last_fit, pill
+                    "<tr><td><a href=\"/model/{}\">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>every {}h</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                    r.name, r.name, r.publisher, origin, r.enrolled, fmt_hours(r.shift_hours), r.checks, r.unfit, pill
                 ));
             }
             body.push_str("</tbody></table>");

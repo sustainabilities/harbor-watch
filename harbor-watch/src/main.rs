@@ -159,6 +159,8 @@ fn cmd_enroll(root: &Path, args: &[String]) {
     });
     let publisher = flag(args, "--publisher").unwrap_or_default();
     let note = flag(args, "--note").unwrap_or_default();
+    let jurisdiction = flag(args, "--jurisdiction").unwrap_or_else(|| "unrecorded".to_string());
+    let source = flag(args, "--source").unwrap_or_else(|| "https://huggingface.co".to_string());
     let shift_hours: u64 = flag(args, "--shift-hours").and_then(|s| s.parse().ok()).unwrap_or(24);
     let attest_clean = flag(args, "--attest-clean");
     let attest_reason = flag(args, "--attest-reason").unwrap_or_default();
@@ -202,6 +204,7 @@ fn cmd_enroll(root: &Path, args: &[String]) {
     if !note.is_empty() {
         receipt.push_str(&format!(",\"note\":\"{}\"", note));
     }
+    receipt.push_str(&format!(",\"jurisdiction\":\"{}\",\"source\":\"{}\"", jurisdiction, source));
     if !wf.tensors.is_empty() {
         receipt.push_str(",\"tensors\":[");
         for (idx, (t, h)) in wf.tensors.iter().enumerate() {
