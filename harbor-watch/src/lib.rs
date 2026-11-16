@@ -16,6 +16,8 @@
 //!   attest that the enrollment itself was clean — that is the
 //!   publisher's receipt, not this tool's. Nothing blurred.
 
+pub mod board;
+pub mod http;
 pub mod json;
 pub mod receipts;
 pub mod safetensors;

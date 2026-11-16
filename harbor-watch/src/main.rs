@@ -18,7 +18,7 @@
 //! receipt. The store lives beside the models: <root>/enrollments/ and
 //! <root>/shifts/ (default root: ./harbor-watch-store).
 
-use harbor_watch::{json, receipts::ShiftLog, safetensors, sha512};
+use harbor_watch::{board, http, json, receipts::ShiftLog, safetensors, sha512};
 use std::path::{Path, PathBuf};
 use std::process::exit;
 
@@ -47,11 +47,87 @@ fn main() {
         "log" => cmd_log(&root, rest.get(1).map(|s| s.as_str()).unwrap_or("")),
         "verify" => cmd_verify(&root, rest.get(1).map(|s| s.as_str()).unwrap_or("")),
         "report" => cmd_report(&root, rest.get(1).map(|s| s.as_str()).unwrap_or("")),
+        "serve" => cmd_serve(&root, &rest[1..]),
         _ => {
-            eprintln!("usage: harbor-watch <enroll|check|log|verify|report> [args] [--root <dir>]");
+            eprintln!("usage: harbor-watch <enroll|check|log|verify|report|serve> [args] [--root <dir>]");
             std::process::exit(2);
         }
     }
+}
+
+/// The shift-board server: the tool's face. Loopback by default (the
+/// machine is the boundary); --lan requires --token-file (the
+/// admission law). Zero-JS; rebuilt from the store on every request.
+fn cmd_serve(root: &Path, args: &[String]) {
+    let port = flag(args, "--port").unwrap_or_else(|| "9003".to_string());
+    let lan = args.iter().any(|a| a == "--lan");
+    let bind = format!("{}:{}", if lan { "0.0.0.0" } else { "127.0.0.1" }, port);
+    let token: Option<String> = if lan {
+        match flag(args, "--token-file").map(|p| std::fs::read_to_string(p)) {
+            Some(Ok(t)) if !t.trim().is_empty() => Some(t.trim().to_string()),
+            _ => {
+                eprintln!("refused: --lan requires --token-file (the admission law)");
+                exit(2)
+            }
+        }
+    } else {
+        None
+    };
+    let board = std::sync::Arc::new(board::Board::new(root));
+    let adm = http::Admission {
+        token: token.clone(),
+        token_fp: token.as_ref().map(|t| sha512::hex(&sha512::digest(t.as_bytes()))[..8].to_string()),
+    };
+    let handler: http::Handler = {
+        let board = board.clone();
+        std::sync::Arc::new(move |req| {
+            let p = req.path.clone();
+            if p == "/" || p == "/board" {
+                return html_response(board.board_html())
+            }
+            if p == "/board.md" {
+                return md_response(board.board_md())
+            }
+            if p == "/llms.txt" {
+                return text_response(&board.llms_txt(), "text/markdown; charset=utf-8")
+            }
+            if p == "/board.css" {
+                return text_response(board::BOARD_CSS, "text/css; charset=utf-8")
+            }
+            if let Some(name) = p.strip_prefix("/model/") {
+                let bare = name.trim_end_matches(".md");
+                if name.ends_with(".md") {
+                    return match board.model_md(bare) {
+                        Some(md) => md_response(md),
+                        None => text_response("no such model", "text/plain; charset=utf-8").with_status(404),
+                    }
+                }
+                return match board.model_html(bare) {
+                    Some(h) => html_response(h),
+                    None => text_response("no such model", "text/plain; charset=utf-8").with_status(404),
+                }
+            }
+            text_response("not found", "text/plain; charset=utf-8").with_status(404)
+        })
+    };
+    println!("harbor-watch shift-board on {} (store: {})", bind, root.display());
+    println!("admission: {}", if token.is_some() { "bearer token on the API (headers only)" } else { "loopback — the machine is the boundary" });
+    if let Err(e) = http::serve(&bind, adm, handler) {
+        eprintln!("{}", e);
+        exit(1)
+    }
+}
+
+fn html_response(body: String) -> http::Response {
+    http::Response::new_html(body)
+}
+
+fn md_response(body: String) -> http::Response {
+    http::Response::new_md(body)
+}
+
+fn text_response(body: &str, ct: &str) -> http::Response {
+    http::Response::new_text(body, ct)
 }
 
 fn flag(args: &[String], name: &str) -> Option<String> {
