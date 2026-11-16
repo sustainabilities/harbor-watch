@@ -1,0 +1,7 @@
+HarborWatchChain.lean:65:5: warning: Variable name `hlink'` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _hlink'
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+LEAN EXIT: 0

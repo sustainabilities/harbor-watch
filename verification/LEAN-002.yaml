@@ -1,0 +1,43 @@
+# Proof Forest Ledger — Leaf Record
+# LEAN-002: the harbor-watch chain and tensor-diff theorems.
+
+id: coe/LEAN-002
+claim_refs:
+  - site/essays/fitness-for-duty   # "weight attestation is fitness for duty"
+  - tool/harbor-watch/v1           # the attestation engine's warranty
+subject:
+  repo: proa-coe
+  path: verification/HarborWatchChain.lean
+  commit_sha: null                 # NAS volume, not a git repo — content-addressed by receipt hash
+  note: >
+    The shift-log chain and tensor-diff model of harbor-watch, kernel-checked.
+    Motivation: the Lazarus paper (Microsoft Research, Nov 10 2026) — fewer than
+    ten dormant neurons, edited in place, backdoor an agent model that passes
+    every evaluation. The defense is attestation against an enrolled reference
+    at every load; these theorems are that attestation's core.
+statement: >
+  Five results over an abstract collision-resistant hash (the computational
+  assumption stated as axioms H_inj / WH_inj / whole_covers — sha512
+  collision resistance plus the byte-partition argument):
+  (1) well_formed_verifies — construction soundness;
+  (2) tamper_detected — a forged entry with a standing hash fails the chain
+      (the tool's warranty, kernel-checked);
+  (3) link_break_detected — a broken prev_hash link fails regardless of hashes;
+  (4) tensor_edit_detected — a tensor edit cannot pass as the enrolled file
+      (the whole-file hash covers the tensors);
+  (5) localization + tamper-anywhere: OWED to the next rung (recorded in the
+      file); localization is TEST-GREEN in the Rust (the lora_b demonstration:
+      one flipped byte, the diff named the tensor).
+tool:
+  name: lean
+  version: 4.35.0
+  pin: elan toolchain leanprover--lean4---v4.35.0   # same pin as LEAN-001
+receipt:
+  path: verification/receipts/LEAN-002-kernel-run.txt
+  sha512: 82c0a45f5635928bbaf12f3e786c9dac7821131b896a185a66ec0f31cbdf95f1f2161f4bfa6c6ed1c5959470b13f4d7897bf87db2d0f19e1d891c200afa34442
+env:
+  host: the principal's Mac (harbor bench)
+  os: macOS (darwin, arm64)
+  date: 2026-11-16
+status: discharged                 # kernel-clean (one unused-variable lint);
+                                   # localization + tamper-anywhere OWED

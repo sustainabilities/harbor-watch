@@ -1,0 +1,12 @@
+[package]
+name = "harbor-watch"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-Proprietary"
+description = "CoE tool #2: fitness-for-duty attestation for model weights — enroll the hire, check every shift, receipt every check. Zero dependencies by estate law. Built because of Lazarus."
+
+[[bin]]
+name = "harbor-watch"
+path = "src/main.rs"
+
+[dependencies]
