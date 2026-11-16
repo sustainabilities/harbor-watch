@@ -1,0 +1,17 @@
+[package]
+name = "harbor-watch-seal"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-Proprietary"
+description = "The SSC envelope: post-quantum sealed distribution for harbor-watch. ML-DSA-65 (FIPS 204, the ratified scheme) over a sha512 manifest — the tool that preaches weight attestation ships attested."
+
+[dependencies]
+ml-dsa = "0.1.2"
+rand_core = { version = "0.6", features = ["getrandom"] }
+sha2 = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[[bin]]
+name = "harbor-watch-seal"
+path = "src/main.rs"
