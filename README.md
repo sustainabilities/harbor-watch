@@ -1,4 +1,4 @@
-# welcome-wagon
+# harbor-watch
 
 **The SafeHarbors open-weight attestation bench.** This repo holds the
 working results of the model-supply-chain work: the harbor-watch tool, its
